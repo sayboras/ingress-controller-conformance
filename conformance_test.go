@@ -25,14 +25,13 @@ import (
 	"os/signal"
 	"path"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
 
 	"github.com/cucumber/godog"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/klog/v2"
-
 	"sigs.k8s.io/ingress-controller-conformance/test/conformance/defaultbackend"
 	"sigs.k8s.io/ingress-controller-conformance/test/conformance/hostrules"
 	"sigs.k8s.io/ingress-controller-conformance/test/conformance/ingressclass"
@@ -49,6 +48,7 @@ var (
 	godogStopOnFailure bool
 	godogNoColors      bool
 	godogOutput        string
+	subset             string
 )
 
 func TestMain(m *testing.M) {
@@ -57,7 +57,7 @@ func TestMain(m *testing.M) {
 
 	flag.StringVar(&godogFormat, "format", "pretty", "Set godog format to use. Valid values are pretty and cucumber")
 	flag.StringVar(&godogTags, "tags", "", "Tags for conformance test")
-	flag.BoolVar(&godogStopOnFailure, "stop-on-failure ", false, "Stop when failure is found")
+	flag.BoolVar(&godogStopOnFailure, "stop-on-failure", false, "Stop when failure is found")
 	flag.BoolVar(&godogNoColors, "no-colors", false, "Disable colors in godog output")
 	flag.StringVar(&godogOutput, "output-directory", ".", "Output directory for test reports")
 	flag.StringVar(&kubernetes.IngressClassValue, "ingress-class", "conformance", "Sets the value of the annotation kubernetes.io/ingress.class in Ingress definitions")
@@ -65,6 +65,7 @@ func TestMain(m *testing.M) {
 	flag.DurationVar(&kubernetes.WaitForEndpointsTimeout, "wait-time-for-ready", 5*time.Minute, "Maximum wait time for ready endpoints")
 	flag.BoolVar(&http.EnableDebug, "enable-http-debug", false, "Enable dump of requests and responses of HTTP requests (useful for debug)")
 	flag.BoolVar(&kubernetes.EnableOutputYamlDefinitions, "enable-output-yaml-definitions", false, "Dump yaml definitions of Kubernetes objects before creation")
+	flag.StringVar(&subset, "features", "", "Run a subset of feature. All features are run by default")
 
 	flag.Parse()
 
@@ -114,8 +115,18 @@ var (
 
 func TestSuite(t *testing.T) {
 	var failed bool
-	for feature, scenarioContext := range features {
-		err := testFeature(feature, scenarioContext)
+	list := []string{
+		"features/ingress_class.feature",
+		"features/default_backend.feature",
+		"features/host_rules.feature",
+		"features/path_rules.feature",
+		"features/load_balancing.feature",
+	}
+	if len(subset) != 0 {
+		list = strings.Split(subset, ",")
+	}
+	for _, feature := range list {
+		err := testFeature(feature, features[feature])
 		if err != nil {
 			if godogStopOnFailure {
 				t.Fatal(err)
