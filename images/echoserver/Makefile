@@ -16,11 +16,12 @@ TAG ?= 0.0
 
 REGISTRY ?= local
 IMAGE = echoserver
+PLATFORMS ?= linux/amd64,linux/arm64
 
 .PHONY: build-image
 build-image: ## Build the ingress conformance image
-	docker build -t $(REGISTRY)/$(IMAGE):$(TAG) .
+	docker buildx build --load --platform=$(PLATFORMS) -t $(REGISTRY)/$(IMAGE):$(TAG) .
 
 .PHONY: publish-image
 publish-image:
-	docker push $(REGISTRY)/$(IMAGE):$(TAG)
+	docker buildx build --push --platform=$(PLATFORMS) -t $(REGISTRY)/$(IMAGE):$(TAG) .
