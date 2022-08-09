@@ -19,7 +19,7 @@ ENV CGO_ENABLED=0
 
 WORKDIR /go/src/sigs.k8s.io/ingress-controller-conformance/
 
-COPY *.go go.* .
+COPY echoserver.go go.mod .
 
 RUN go build -trimpath -ldflags="-buildid= -s -w" -o echoserver .
 
