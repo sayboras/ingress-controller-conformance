@@ -13,13 +13,13 @@
 # limitations under the License.
 
 # Build
-FROM golang:1.14.5 as builder
+FROM golang:1.19.0 as builder
 
 ENV CGO_ENABLED=0
 
 WORKDIR /go/src/sigs.k8s.io/ingress-controller-conformance/
 
-COPY echoserver.go .
+COPY echoserver.go go.mod .
 
 RUN go build -trimpath -ldflags="-buildid= -s -w" -o echoserver .
 
