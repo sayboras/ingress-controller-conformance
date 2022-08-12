@@ -3,12 +3,9 @@ options:
 steps:
   - name: 'gcr.io/k8s-testimages/gcb-docker-gcloud:v20220617-174ad91c3a'
     entrypoint: /buildx-entrypoint
-    env:
-      - TAG=$_GIT_TAG
-      - REGISTRY=gcr.io/k8s-staging-ingressconformance
     args:
     - build
-    - --tag=$REGISTRY/echoserver:$TAG
+    - --tag=gcr.io/$PROJECT_ID/echoserver:$_GIT_TAG
     - --platform=linux/amd64,linux/arm64
     - --push
     - .
