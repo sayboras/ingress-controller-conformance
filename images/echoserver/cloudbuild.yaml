@@ -11,3 +11,4 @@ steps:
     - .
 substitutions:
   _GIT_TAG: "12345"
+timeout: 1800s # allow up to 30min, as emulation can be slow
