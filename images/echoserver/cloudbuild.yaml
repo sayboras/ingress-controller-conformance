@@ -5,7 +5,7 @@ steps:
     entrypoint: /buildx-entrypoint
     args:
     - build
-    - --tag=gcr.io/$PROJECT_ID/echoserver:$TAG
+    - --tag=gcr.io/$PROJECT_ID/echoserver:$_GIT_TAG
     - --platform=linux/amd64,linux/arm64
     - --push
     - .
