@@ -159,9 +159,19 @@ func echoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	writeEchoResponseHeaders(w, r.Header)
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Write(js)
+}
+
+func writeEchoResponseHeaders(w http.ResponseWriter, headers http.Header) {
+	for _, headerKV := range headers["X-Echo-Set-Header"] {
+		name, value, _ := strings.Cut(headerKV, ":")
+		// Append directly to the map/slice to preserve casing.
+		w.Header()[name] = append(w.Header()[name], strings.TrimSpace(value))
+	}
+
 }
 
 func processError(w http.ResponseWriter, err error, code int) {

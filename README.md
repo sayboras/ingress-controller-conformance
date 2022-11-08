@@ -39,6 +39,41 @@ Reporting TestId 'sample'
 # You can then send test HTTP requests on localhost:3000
 $ curl localhost:3000
 {"TestId":"sample","Path":"/","Host":"localhost:3000","Method":"GET","Proto":"HTTP/1.1","Headers":{"Accept":["*/*"],"User-Agent":["curl/7.54.0"]}}
+
+# You can specify headers that should be returned in the echo response using the `X-Echo-Set-Header` header.
+# This header can be specified multiple times. Values are a header name and value separated by `:`.
+# Header name casing is preserved.
+$ curl -i localhost:3000 -H 'X-Echo-Set-Header: X-Foo: value1' -H 'X-Echo-Set-Header: x-bar: value2'
+HTTP/1.1 200 OK
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-Foo: value1
+x-bar: value2
+Date: Tue, 08 Nov 2022 18:13:21 GMT
+Content-Length: 299
+
+{
+ "path": "/",
+ "host": "localhost:3000",
+ "method": "GET",
+ "proto": "HTTP/1.1",
+ "headers": {
+  "Accept": [
+   "*/*"
+  ],
+  "User-Agent": [
+   "curl/7.68.0"
+  ],
+  "X-Echo-Set-Header": [
+   "X-Foo: value1",
+   "x-bar: value2"
+  ]
+ },
+ "namespace": "",
+ "ingress": "",
+ "service": "",
+ "pod": ""
+}
 ```
 
 ---
