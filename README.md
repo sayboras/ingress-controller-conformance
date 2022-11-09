@@ -41,16 +41,16 @@ $ curl localhost:3000
 {"TestId":"sample","Path":"/","Host":"localhost:3000","Method":"GET","Proto":"HTTP/1.1","Headers":{"Accept":["*/*"],"User-Agent":["curl/7.54.0"]}}
 
 # You can specify headers that should be returned in the echo response using the `X-Echo-Set-Header` header.
-# This header can be specified multiple times. Values are a header name and value separated by `:`.
+# This header can be specified multiple times if needed. Values are a comma separated list of header names and values separated by `:`.
 # Header name casing is preserved.
-$ curl -i localhost:3000 -H 'X-Echo-Set-Header: X-Foo: value1' -H 'X-Echo-Set-Header: x-bar: value2'
+$ curl -i localhost:3000 -H 'X-Echo-Set-Header: X-Foo: value1' -H 'X-Echo-Set-Header: x-bar: value2,x-bar: value3'
 HTTP/1.1 200 OK
 Content-Type: application/json
 X-Content-Type-Options: nosniff
 X-Foo: value1
-x-bar: value2
-Date: Tue, 08 Nov 2022 18:13:21 GMT
-Content-Length: 299
+x-bar: value2,value3
+Date: Wed, 09 Nov 2022 16:14:04 GMT
+Content-Length: 313
 
 {
  "path": "/",
@@ -66,7 +66,7 @@ Content-Length: 299
   ],
   "X-Echo-Set-Header": [
    "X-Foo: value1",
-   "x-bar: value2"
+   "x-bar: value2,x-bar: value3"
   ]
  },
  "namespace": "",

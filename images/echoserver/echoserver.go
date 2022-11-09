@@ -166,10 +166,17 @@ func echoHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeEchoResponseHeaders(w http.ResponseWriter, headers http.Header) {
-	for _, headerKV := range headers["X-Echo-Set-Header"] {
-		name, value, _ := strings.Cut(headerKV, ":")
-		// Append directly to the map/slice to preserve casing.
-		w.Header()[name] = append(w.Header()[name], strings.TrimSpace(value))
+	for _, headerKVList := range headers["X-Echo-Set-Header"] {
+		headerKVs := strings.Split(headerKVList, ",")
+		for _, headerKV := range headerKVs {
+			name, value, _ := strings.Cut(strings.TrimSpace(headerKV), ":")
+			// Add directly to the map to preserve casing.
+			if len(w.Header()[name]) == 0 {
+				w.Header()[name] = []string{value}
+			} else {
+				w.Header()[name][0] += "," + strings.TrimSpace(value)
+			}
+		}
 	}
 
 }
