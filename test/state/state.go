@@ -19,8 +19,14 @@ package state
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"sigs.k8s.io/ingress-controller-conformance/test/http"
+)
+
+const (
+	retryCount   = 3
+	maxRetryTime = 30 * time.Second
 )
 
 // Scenario holds state for a test scenario
@@ -43,15 +49,73 @@ func New() *Scenario {
 
 // CaptureRoundTrip will perform an HTTP request and return the CapturedRequest and CapturedResponse tuple
 func (s *Scenario) CaptureRoundTrip(method, scheme, hostname, path string) error {
-	capturedRequest, capturedResponse, err := http.CaptureRoundTrip(method, scheme, hostname, path, s.IPOrFQDN)
+	var capturedRequest *http.CapturedRequest
+	var capturedResponse *http.CapturedResponse
+	var err error
+
+	err = awaitConvergence(retryCount, maxRetryTime, func(elapsed time.Duration) bool {
+		capturedRequest, capturedResponse, err = http.CaptureRoundTrip(method, scheme, hostname, path, s.IPOrFQDN)
+		if err != nil {
+			return false
+		}
+
+		defer func() {
+			s.CapturedRequest = capturedRequest
+			s.CapturedResponse = capturedResponse
+		}()
+
+		return compareResponse(s.CapturedResponse, capturedResponse)
+	})
 	if err != nil {
 		return err
 	}
-
-	s.CapturedRequest = capturedRequest
-	s.CapturedResponse = capturedResponse
-
 	return nil
+}
+
+// compareResponse compares two captured responses and returns true if they are equal.
+// Currently, only status code is compared.
+func compareResponse(prev *http.CapturedResponse, curr *http.CapturedResponse) bool {
+	if prev == nil || curr == nil {
+		return false
+	}
+	return prev.StatusCode == curr.StatusCode
+}
+
+// awaitConvergence runs the given function until it returns 'true' `threshold` times in a row.
+// Each failed attempt has a 1s delay; successful attempts have no delay.
+func awaitConvergence(threshold int, maxTimeToConsistency time.Duration, fn func(elapsed time.Duration) bool) error {
+	successes := 0
+	attempts := 0
+	start := time.Now()
+	to := time.After(maxTimeToConsistency)
+	delay := time.Second
+	for {
+		select {
+		case <-to:
+			return fmt.Errorf("timed out waiting for convergence")
+		default:
+		}
+
+		completed := fn(time.Now().Sub(start))
+		attempts++
+		if completed {
+			successes++
+			if successes >= threshold {
+				return nil
+			}
+			// Skip delay if we have a success
+			continue
+		}
+
+		successes = 0
+		select {
+		// Capture the overall timeout
+		case <-to:
+			return fmt.Errorf("timeout while waiting after %d attempts, %d/%d sucessess", attempts, successes, threshold)
+			// And the per-try delay
+		case <-time.After(delay):
+		}
+	}
 }
 
 // AssertStatusCode returns an error if the captured response status code does not match the expected value
