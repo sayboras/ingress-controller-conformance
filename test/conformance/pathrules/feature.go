@@ -46,7 +46,12 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 		state = tstate.New()
 	})
 
-	ctx.AfterScenario(func(*messages.Pickle, error) {
+	ctx.AfterScenario(func(_ *messages.Pickle, err error) {
+		// Only delete the namespace if the scenario was successful
+		// This is useful for debugging purpose
+		if err != nil {
+			return
+		}
 		// delete namespace an all the content
 		_ = kubernetes.DeleteNamespace(kubernetes.KubeClient, state.Namespace)
 	})
